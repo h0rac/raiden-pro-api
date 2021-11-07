@@ -37,7 +37,8 @@ class Raiden:
             "CMD_RESET_TARGET":79,
             "CMD_GPIO_OUT": 80,
             "CMD_UART_TRIGGER":81,
-            "CMD_UART_TRIGGER_BAUD":82
+            "CMD_UART_TRIGGER_BAUD":82,
+            "CMD_EMMC_TRIGGER_DATA":83
         }
         
         self.device = serial.Serial(serial_dev, baudrate= baud, timeout=2.5, writeTimeout=2.5)
@@ -97,6 +98,7 @@ class Raiden:
             ord(raw) == self._commands["CMD_GLITCH_GAP"] or
             ord(raw) == self._commands["CMD_GLITCH_MAX"] or
             ord(raw) == self._commands["CMD_UART_TRIGGER_BAUD"] or
+            ord(raw) == self._commands["CMD_EMMC_TRIGGE_DATA"] or
             ord(raw) == self._commands["CMD_RESET_TARGET"]):
 
             data = struct.pack(">I", value)
