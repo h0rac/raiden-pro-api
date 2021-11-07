@@ -2,10 +2,10 @@ from setuptools import setup
 
 setup(
     name='raiden_python',
-    version='1.0.2',    
+    version='1.1.7',    
     description='Raiden api',
     url='',
-    author='Grzegorz Wypych (h0rac) & Adam Laurie (M@jor Malfunction)',
+    author='Grzegorz Wypych (h0rac)',
     author_email='',
     license='BSD 3-clause',
     packages=['raiden_python'],
