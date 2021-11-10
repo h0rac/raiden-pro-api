@@ -98,7 +98,7 @@ class Raiden:
             ord(raw) == self._commands["CMD_GLITCH_GAP"] or
             ord(raw) == self._commands["CMD_GLITCH_MAX"] or
             ord(raw) == self._commands["CMD_UART_TRIGGER_BAUD"] or
-            ord(raw) == self._commands["CMD_EMMC_TRIGGE_DATA"] or
+            ord(raw) == self._commands["CMD_EMMC_TRIGGER_DATA"] or
             ord(raw) == self._commands["CMD_RESET_TARGET"]):
 
             data = struct.pack(">I", value)
