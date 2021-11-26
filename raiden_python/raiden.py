@@ -46,6 +46,8 @@ class Raiden:
         self.device.dsrdtr = False 
         print("Raiden started...")
 
+    def check_glitch_frequency(self):
+        return self._hz
 
     def __raiden_cmd(self, device, command, value=None):
 
