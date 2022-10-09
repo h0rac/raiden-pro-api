@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
-<meta name="generator" content="pdoc 0.9.1" />
-<title>raiden_python.raiden API documentation</title>
+<meta name="generator" content="pdoc 0.10.0" />
+<title>raiden API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -19,7 +19,7 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>raiden_python.raiden</code></h1>
+<h1 class="title">Module <code>raiden</code></h1>
 </header>
 <section id="section-intro">
 <details class="source">
@@ -63,7 +63,10 @@ class Raiden:
             &#34;CMD_BUILDTIME&#34;:77,
             &#34;CMD_INVERT_TRIGGER&#34;:78,
             &#34;CMD_RESET_TARGET&#34;:79,
-            &#34;CMD_GPIO_OUT&#34;: 80
+            &#34;CMD_GPIO_OUT&#34;: 80,
+            &#34;CMD_UART_TRIGGER&#34;:81,
+            &#34;CMD_UART_TRIGGER_BAUD&#34;:82,
+            &#34;CMD_EMMC_TRIGGER_DATA&#34;:83
         }
         
         self.device = serial.Serial(serial_dev, baudrate= baud, timeout=2.5, writeTimeout=2.5)
@@ -71,6 +74,8 @@ class Raiden:
         self.device.dsrdtr = False 
         print(&#34;Raiden started...&#34;)
 
+    def check_glitch_frequency(self):
+        return self._hz
 
     def __raiden_cmd(self, device, command, value=None):
 
@@ -103,6 +108,7 @@ class Raiden:
             ord(raw) == self._commands[&#34;CMD_RST&#34;] or
             ord(raw) == self._commands[&#34;CMD_INVERT_TRIGGER&#34;] or
             ord(raw) == self._commands[&#34;CMD_GPIO_OUT&#34;] or
+            ord(raw) == self._commands[&#34;CMD_UART_TRIGGER&#34;] or
             ord(raw) == self._commands[&#34;CMD_RST_GLITCHER&#34;]):
 
             data = struct.pack(&#34;&gt;B&#34;, value)
@@ -121,7 +127,8 @@ class Raiden:
             ord(raw) == self._commands[&#34;CMD_GLITCH_COUNT&#34;] or
             ord(raw) == self._commands[&#34;CMD_GLITCH_GAP&#34;] or
             ord(raw) == self._commands[&#34;CMD_GLITCH_MAX&#34;] or
-            ord(raw) == self._commands[&#34;CMD_CLK_GEN&#34;] or
+            ord(raw) == self._commands[&#34;CMD_UART_TRIGGER_BAUD&#34;] or
+            ord(raw) == self._commands[&#34;CMD_EMMC_TRIGGER_DATA&#34;] or
             ord(raw) == self._commands[&#34;CMD_RESET_TARGET&#34;]):
 
             data = struct.pack(&#34;&gt;I&#34;, value)
@@ -135,7 +142,7 @@ class Raiden:
             return
         return
 
-    def set_param(self, param=&#34;CMD_GLITCH_DELAY&#34;, seconds=0, value=1):
+    def set_param(self, param=&#34;CMD_GLITCH_DELAY&#34;, value=1):
         &#34;&#34;&#34;
         Set glitching params before arming Raiden.
 
@@ -147,9 +154,9 @@ class Raiden:
             self.__raiden_cmd(self.device, self._commands[param], int(value))
             return
         if(self.ticks):
-            fpga_ticks= int(seconds)
+            fpga_ticks= int(value)
         else:
-            fpga_ticks= math.ceil(self._hz * seconds)
+            fpga_ticks= math.ceil(self._hz * value)
         self.__raiden_cmd(self.device, self._commands[param], fpga_ticks)
     
     def arm(self, value=1):
@@ -293,7 +300,7 @@ class Raiden:
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="raiden_python.raiden.Raiden"><code class="flex name class">
+<dt id="raiden.Raiden"><code class="flex name class">
 <span>class <span class="ident">Raiden</span></span>
 <span>(</span><span>baud=115200, mhz=100, serial_dev='/dev/cu.usbserial-00004114B', ticks=False, debug=False)</span>
 </code></dt>
@@ -339,7 +346,10 @@ class Raiden:
             &#34;CMD_BUILDTIME&#34;:77,
             &#34;CMD_INVERT_TRIGGER&#34;:78,
             &#34;CMD_RESET_TARGET&#34;:79,
-            &#34;CMD_GPIO_OUT&#34;: 80
+            &#34;CMD_GPIO_OUT&#34;: 80,
+            &#34;CMD_UART_TRIGGER&#34;:81,
+            &#34;CMD_UART_TRIGGER_BAUD&#34;:82,
+            &#34;CMD_EMMC_TRIGGER_DATA&#34;:83
         }
         
         self.device = serial.Serial(serial_dev, baudrate= baud, timeout=2.5, writeTimeout=2.5)
@@ -347,6 +357,8 @@ class Raiden:
         self.device.dsrdtr = False 
         print(&#34;Raiden started...&#34;)
 
+    def check_glitch_frequency(self):
+        return self._hz
 
     def __raiden_cmd(self, device, command, value=None):
 
@@ -379,6 +391,7 @@ class Raiden:
             ord(raw) == self._commands[&#34;CMD_RST&#34;] or
             ord(raw) == self._commands[&#34;CMD_INVERT_TRIGGER&#34;] or
             ord(raw) == self._commands[&#34;CMD_GPIO_OUT&#34;] or
+            ord(raw) == self._commands[&#34;CMD_UART_TRIGGER&#34;] or
             ord(raw) == self._commands[&#34;CMD_RST_GLITCHER&#34;]):
 
             data = struct.pack(&#34;&gt;B&#34;, value)
@@ -397,7 +410,8 @@ class Raiden:
             ord(raw) == self._commands[&#34;CMD_GLITCH_COUNT&#34;] or
             ord(raw) == self._commands[&#34;CMD_GLITCH_GAP&#34;] or
             ord(raw) == self._commands[&#34;CMD_GLITCH_MAX&#34;] or
-            ord(raw) == self._commands[&#34;CMD_CLK_GEN&#34;] or
+            ord(raw) == self._commands[&#34;CMD_UART_TRIGGER_BAUD&#34;] or
+            ord(raw) == self._commands[&#34;CMD_EMMC_TRIGGER_DATA&#34;] or
             ord(raw) == self._commands[&#34;CMD_RESET_TARGET&#34;]):
 
             data = struct.pack(&#34;&gt;I&#34;, value)
@@ -411,7 +425,7 @@ class Raiden:
             return
         return
 
-    def set_param(self, param=&#34;CMD_GLITCH_DELAY&#34;, seconds=0, value=1):
+    def set_param(self, param=&#34;CMD_GLITCH_DELAY&#34;, value=1):
         &#34;&#34;&#34;
         Set glitching params before arming Raiden.
 
@@ -423,9 +437,9 @@ class Raiden:
             self.__raiden_cmd(self.device, self._commands[param], int(value))
             return
         if(self.ticks):
-            fpga_ticks= int(seconds)
+            fpga_ticks= int(value)
         else:
-            fpga_ticks= math.ceil(self._hz * seconds)
+            fpga_ticks= math.ceil(self._hz * value)
         self.__raiden_cmd(self.device, self._commands[param], fpga_ticks)
     
     def arm(self, value=1):
@@ -561,7 +575,7 @@ class Raiden:
 </details>
 <h3>Methods</h3>
 <dl>
-<dt id="raiden_python.raiden.Raiden.arm"><code class="name flex">
+<dt id="raiden.Raiden.arm"><code class="name flex">
 <span>def <span class="ident">arm</span></span>(<span>self, value=1)</span>
 </code></dt>
 <dd>
@@ -585,7 +599,7 @@ class Raiden:
         return</code></pre>
 </details>
 </dd>
-<dt id="raiden_python.raiden.Raiden.available_commands"><code class="name flex">
+<dt id="raiden.Raiden.available_commands"><code class="name flex">
 <span>def <span class="ident">available_commands</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -604,7 +618,20 @@ class Raiden:
     return [x for x in self._commands]</code></pre>
 </details>
 </dd>
-<dt id="raiden_python.raiden.Raiden.disc"><code class="name flex">
+<dt id="raiden.Raiden.check_glitch_frequency"><code class="name flex">
+<span>def <span class="ident">check_glitch_frequency</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def check_glitch_frequency(self):
+    return self._hz</code></pre>
+</details>
+</dd>
+<dt id="raiden.Raiden.disc"><code class="name flex">
 <span>def <span class="ident">disc</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -621,7 +648,7 @@ class Raiden:
     self.device.close()</code></pre>
 </details>
 </dd>
-<dt id="raiden_python.raiden.Raiden.flag_status"><code class="name flex">
+<dt id="raiden.Raiden.flag_status"><code class="name flex">
 <span>def <span class="ident">flag_status</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -661,7 +688,7 @@ flags[7] gpio2_out - current GPIO2_OUT status</p></div>
     return self.__raiden_cmd(self.device, self._commands[&#34;CMD_FLAGS_STATUS&#34;])</code></pre>
 </details>
 </dd>
-<dt id="raiden_python.raiden.Raiden.get_buildtime"><code class="name flex">
+<dt id="raiden.Raiden.get_buildtime"><code class="name flex">
 <span>def <span class="ident">get_buildtime</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -680,7 +707,7 @@ flags[7] gpio2_out - current GPIO2_OUT status</p></div>
     return &#34;Raiden build time: {}/{}/{}, {}:{}&#34;.format(day, month, year, hour, minute)</code></pre>
 </details>
 </dd>
-<dt id="raiden_python.raiden.Raiden.glitch_out"><code class="name flex">
+<dt id="raiden.Raiden.glitch_out"><code class="name flex">
 <span>def <span class="ident">glitch_out</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -699,7 +726,7 @@ flags[7] gpio2_out - current GPIO2_OUT status</p></div>
     return ((self.flag_status() &gt;&gt; 3) &amp; 0x01)</code></pre>
 </details>
 </dd>
-<dt id="raiden_python.raiden.Raiden.gpio_out_status"><code class="name flex">
+<dt id="raiden.Raiden.gpio_out_status"><code class="name flex">
 <span>def <span class="ident">gpio_out_status</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -715,7 +742,7 @@ flags[7] gpio2_out - current GPIO2_OUT status</p></div>
     return ((self.flag_status()&gt;&gt;6) &amp;0x01)</code></pre>
 </details>
 </dd>
-<dt id="raiden_python.raiden.Raiden.is_armed"><code class="name flex">
+<dt id="raiden.Raiden.is_armed"><code class="name flex">
 <span>def <span class="ident">is_armed</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -734,7 +761,7 @@ flags[7] gpio2_out - current GPIO2_OUT status</p></div>
     return ((self.flag_status()) &amp; 0x01)</code></pre>
 </details>
 </dd>
-<dt id="raiden_python.raiden.Raiden.is_finished"><code class="name flex">
+<dt id="raiden.Raiden.is_finished"><code class="name flex">
 <span>def <span class="ident">is_finished</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -753,7 +780,7 @@ flags[7] gpio2_out - current GPIO2_OUT status</p></div>
     return ((self.flag_status() &gt;&gt; 2) &amp; 0x01)</code></pre>
 </details>
 </dd>
-<dt id="raiden_python.raiden.Raiden.is_glitched"><code class="name flex">
+<dt id="raiden.Raiden.is_glitched"><code class="name flex">
 <span>def <span class="ident">is_glitched</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -772,7 +799,7 @@ flags[7] gpio2_out - current GPIO2_OUT status</p></div>
     return ((self.flag_status() &gt;&gt; 1) &amp; 0x01)</code></pre>
 </details>
 </dd>
-<dt id="raiden_python.raiden.Raiden.is_gpio1_in_high"><code class="name flex">
+<dt id="raiden.Raiden.is_gpio1_in_high"><code class="name flex">
 <span>def <span class="ident">is_gpio1_in_high</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -788,7 +815,7 @@ flags[7] gpio2_out - current GPIO2_OUT status</p></div>
     return ((self.flag_status()&gt;&gt;5) &amp; 0x01)</code></pre>
 </details>
 </dd>
-<dt id="raiden_python.raiden.Raiden.is_gpio2_in_high"><code class="name flex">
+<dt id="raiden.Raiden.is_gpio2_in_high"><code class="name flex">
 <span>def <span class="ident">is_gpio2_in_high</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -804,7 +831,7 @@ flags[7] gpio2_out - current GPIO2_OUT status</p></div>
     return ((self.flag_status()&gt;&gt;7) &amp; 0x01)</code></pre>
 </details>
 </dd>
-<dt id="raiden_python.raiden.Raiden.is_triggered"><code class="name flex">
+<dt id="raiden.Raiden.is_triggered"><code class="name flex">
 <span>def <span class="ident">is_triggered</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -823,7 +850,7 @@ flags[7] gpio2_out - current GPIO2_OUT status</p></div>
     return ((self.flag_status() &gt;&gt; 4) &amp; 0x01)</code></pre>
 </details>
 </dd>
-<dt id="raiden_python.raiden.Raiden.reset_glitcher"><code class="name flex">
+<dt id="raiden.Raiden.reset_glitcher"><code class="name flex">
 <span>def <span class="ident">reset_glitcher</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -839,8 +866,8 @@ flags[7] gpio2_out - current GPIO2_OUT status</p></div>
     self.__raiden_cmd(self.device, self._commands[&#34;CMD_RST_GLITCHER&#34;], 1)</code></pre>
 </details>
 </dd>
-<dt id="raiden_python.raiden.Raiden.set_param"><code class="name flex">
-<span>def <span class="ident">set_param</span></span>(<span>self, param='CMD_GLITCH_DELAY', seconds=0, value=1)</span>
+<dt id="raiden.Raiden.set_param"><code class="name flex">
+<span>def <span class="ident">set_param</span></span>(<span>self, param='CMD_GLITCH_DELAY', value=1)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Set glitching params before arming Raiden.</p>
@@ -851,7 +878,7 @@ flags[7] gpio2_out - current GPIO2_OUT status</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def set_param(self, param=&#34;CMD_GLITCH_DELAY&#34;, seconds=0, value=1):
+<pre><code class="python">def set_param(self, param=&#34;CMD_GLITCH_DELAY&#34;, value=1):
     &#34;&#34;&#34;
     Set glitching params before arming Raiden.
 
@@ -863,13 +890,13 @@ flags[7] gpio2_out - current GPIO2_OUT status</p></div>
         self.__raiden_cmd(self.device, self._commands[param], int(value))
         return
     if(self.ticks):
-        fpga_ticks= int(seconds)
+        fpga_ticks= int(value)
     else:
-        fpga_ticks= math.ceil(self._hz * seconds)
+        fpga_ticks= math.ceil(self._hz * value)
     self.__raiden_cmd(self.device, self._commands[param], fpga_ticks)</code></pre>
 </details>
 </dd>
-<dt id="raiden_python.raiden.Raiden.set_target_power"><code class="name flex">
+<dt id="raiden.Raiden.set_target_power"><code class="name flex">
 <span>def <span class="ident">set_target_power</span></span>(<span>self, power='auto')</span>
 </code></dt>
 <dd>
@@ -904,32 +931,28 @@ flags[7] gpio2_out - current GPIO2_OUT status</p></div>
 <ul></ul>
 </div>
 <ul id="index">
-<li><h3>Super-module</h3>
-<ul>
-<li><code><a title="raiden_python" href="index.html">raiden_python</a></code></li>
-</ul>
-</li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="raiden_python.raiden.Raiden" href="#raiden_python.raiden.Raiden">Raiden</a></code></h4>
-<ul class="two-column">
-<li><code><a title="raiden_python.raiden.Raiden.arm" href="#raiden_python.raiden.Raiden.arm">arm</a></code></li>
-<li><code><a title="raiden_python.raiden.Raiden.available_commands" href="#raiden_python.raiden.Raiden.available_commands">available_commands</a></code></li>
-<li><code><a title="raiden_python.raiden.Raiden.disc" href="#raiden_python.raiden.Raiden.disc">disc</a></code></li>
-<li><code><a title="raiden_python.raiden.Raiden.flag_status" href="#raiden_python.raiden.Raiden.flag_status">flag_status</a></code></li>
-<li><code><a title="raiden_python.raiden.Raiden.get_buildtime" href="#raiden_python.raiden.Raiden.get_buildtime">get_buildtime</a></code></li>
-<li><code><a title="raiden_python.raiden.Raiden.glitch_out" href="#raiden_python.raiden.Raiden.glitch_out">glitch_out</a></code></li>
-<li><code><a title="raiden_python.raiden.Raiden.gpio_out_status" href="#raiden_python.raiden.Raiden.gpio_out_status">gpio_out_status</a></code></li>
-<li><code><a title="raiden_python.raiden.Raiden.is_armed" href="#raiden_python.raiden.Raiden.is_armed">is_armed</a></code></li>
-<li><code><a title="raiden_python.raiden.Raiden.is_finished" href="#raiden_python.raiden.Raiden.is_finished">is_finished</a></code></li>
-<li><code><a title="raiden_python.raiden.Raiden.is_glitched" href="#raiden_python.raiden.Raiden.is_glitched">is_glitched</a></code></li>
-<li><code><a title="raiden_python.raiden.Raiden.is_gpio1_in_high" href="#raiden_python.raiden.Raiden.is_gpio1_in_high">is_gpio1_in_high</a></code></li>
-<li><code><a title="raiden_python.raiden.Raiden.is_gpio2_in_high" href="#raiden_python.raiden.Raiden.is_gpio2_in_high">is_gpio2_in_high</a></code></li>
-<li><code><a title="raiden_python.raiden.Raiden.is_triggered" href="#raiden_python.raiden.Raiden.is_triggered">is_triggered</a></code></li>
-<li><code><a title="raiden_python.raiden.Raiden.reset_glitcher" href="#raiden_python.raiden.Raiden.reset_glitcher">reset_glitcher</a></code></li>
-<li><code><a title="raiden_python.raiden.Raiden.set_param" href="#raiden_python.raiden.Raiden.set_param">set_param</a></code></li>
-<li><code><a title="raiden_python.raiden.Raiden.set_target_power" href="#raiden_python.raiden.Raiden.set_target_power">set_target_power</a></code></li>
+<h4><code><a title="raiden.Raiden" href="#raiden.Raiden">Raiden</a></code></h4>
+<ul class="">
+<li><code><a title="raiden.Raiden.arm" href="#raiden.Raiden.arm">arm</a></code></li>
+<li><code><a title="raiden.Raiden.available_commands" href="#raiden.Raiden.available_commands">available_commands</a></code></li>
+<li><code><a title="raiden.Raiden.check_glitch_frequency" href="#raiden.Raiden.check_glitch_frequency">check_glitch_frequency</a></code></li>
+<li><code><a title="raiden.Raiden.disc" href="#raiden.Raiden.disc">disc</a></code></li>
+<li><code><a title="raiden.Raiden.flag_status" href="#raiden.Raiden.flag_status">flag_status</a></code></li>
+<li><code><a title="raiden.Raiden.get_buildtime" href="#raiden.Raiden.get_buildtime">get_buildtime</a></code></li>
+<li><code><a title="raiden.Raiden.glitch_out" href="#raiden.Raiden.glitch_out">glitch_out</a></code></li>
+<li><code><a title="raiden.Raiden.gpio_out_status" href="#raiden.Raiden.gpio_out_status">gpio_out_status</a></code></li>
+<li><code><a title="raiden.Raiden.is_armed" href="#raiden.Raiden.is_armed">is_armed</a></code></li>
+<li><code><a title="raiden.Raiden.is_finished" href="#raiden.Raiden.is_finished">is_finished</a></code></li>
+<li><code><a title="raiden.Raiden.is_glitched" href="#raiden.Raiden.is_glitched">is_glitched</a></code></li>
+<li><code><a title="raiden.Raiden.is_gpio1_in_high" href="#raiden.Raiden.is_gpio1_in_high">is_gpio1_in_high</a></code></li>
+<li><code><a title="raiden.Raiden.is_gpio2_in_high" href="#raiden.Raiden.is_gpio2_in_high">is_gpio2_in_high</a></code></li>
+<li><code><a title="raiden.Raiden.is_triggered" href="#raiden.Raiden.is_triggered">is_triggered</a></code></li>
+<li><code><a title="raiden.Raiden.reset_glitcher" href="#raiden.Raiden.reset_glitcher">reset_glitcher</a></code></li>
+<li><code><a title="raiden.Raiden.set_param" href="#raiden.Raiden.set_param">set_param</a></code></li>
+<li><code><a title="raiden.Raiden.set_target_power" href="#raiden.Raiden.set_target_power">set_target_power</a></code></li>
 </ul>
 </li>
 </ul>
@@ -938,7 +961,7 @@ flags[7] gpio2_out - current GPIO2_OUT status</p></div>
 </nav>
 </main>
 <footer id="footer">
-<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.1</a>.</p>
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.10.0</a>.</p>
 </footer>
 </body>
 </html>
