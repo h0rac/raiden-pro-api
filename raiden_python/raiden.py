@@ -8,7 +8,7 @@ class Raiden:
     """
     Raiden defines class fields and methods
     """
-    def __init__(self, baud= 115200, mhz= 100, serial_dev="/dev/cu.usbserial-00004114B", ticks= False, debug=False):
+    def __init__(self, baud= 115200, mhz= 100, serial_dev="/dev/cu.usbserial-00004114B", ticks= False, debug=False, vstart=1, glitch_max=1):
         """
         Construct a new 'Raiden' object.
 
@@ -46,6 +46,8 @@ class Raiden:
         self.device = serial.Serial(serial_dev, baudrate= baud, timeout=2.5, writeTimeout=2.5)
         self.device.rtscts = False
         self.device.dsrdtr = False 
+        self.__raiden_cmd(self.device, self._commands["CMD_VSTART"], self.vstart)
+        self.__raiden_cmd(self.device, self._commands["CMD_GLITCH_MAX"], self.glitch_max)
         print("Raiden started...")
 
     def check_glitch_frequency(self):
