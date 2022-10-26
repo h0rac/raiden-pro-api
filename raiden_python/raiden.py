@@ -19,6 +19,8 @@ class Raiden:
         """
         self._hz= float(mhz * 1000000)
         self.ticks= ticks
+        self.vstart = vstart
+        self.glitch_max = glitch_max
         self.debug = debug
         self._commands = {
             "CMD_RST_GLITCHER":65,
