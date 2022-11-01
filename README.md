@@ -2,7 +2,7 @@
 
 #### clone repository
 ```
-git clone git@github.com:IBM/raiden-python.git 
+git clone  git@github.com:h0rac/raiden-pro-api.git
 ```
 
 #### Install raiden package
