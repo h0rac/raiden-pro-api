@@ -123,7 +123,6 @@ class Raiden:
         Set glitching params before arming Raiden.
 
         :param param: Raiden command
-        :param seconds: FPGA ticks or seconds
         :param value: value for CMD_GLITCH_COUNT, CMD_VSTART, CMD_GLITCH_MAX
         """
         if(param == "CMD_GLITCH_COUNT" or param == "CMD_VSTART" or param == "CMD_GLITCH_MAX" or param == "CMD_INVERT_TRIGGER" or param == "CMD_GPIO_OUT"):
@@ -259,10 +258,10 @@ class Raiden:
 
     def get_buildtime(self):
         raw = self.__raiden_cmd(self.device, self._commands["CMD_BUILDTIME"])
-        day = raw[3] >> 3
-        month = ((raw[3] & 0x7) << 1) + (raw[2] >> 7)
-        year = ((raw[2] >> 1) & 0x3f) + 2000
-        hour = ((raw[2] & 0x1) << 4) + (raw[1] >> 4)
-        minute = ((raw[1] & 0xf) << 2) + (raw[0] >> 6)
+        day = ord(raw[3]) >> 3
+        month = ((ord(raw[3]) & 0x7) << 1) + (ord(raw[2]) >> 7)
+        year = ((ord(raw[2]) >> 1) & 0x3f) + 2000
+        hour = ((ord(raw[2]) & 0x1) << 4) + (ord(raw[1]) >> 4)
+        minute = ((ord(raw[1]) & 0xf) << 2) + (ord(raw[0]) >> 6)
         return "Raiden build time: {}/{}/{}, {}:{}".format(day, month, year, hour, minute)
 

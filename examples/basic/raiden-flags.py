@@ -5,9 +5,9 @@ import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-p', '--port',
-                    required=True,
+                    required=False,
                     type=str,
-                    default="/dev/cu.usbserial-00004014B", 
+                    default="/dev/raiden", 
                     dest="port",
                     metavar="<port>",
                     help="Raiden serial port")
@@ -31,7 +31,6 @@ def showflags():
     print("  Finished: %d" % raiden.is_finished());
     print("  Power: %d" % raiden.glitch_out());
 
-print(raiden.get_buildtime())
 print(raiden.get_buildtime())
 
 print("clearing flags")
