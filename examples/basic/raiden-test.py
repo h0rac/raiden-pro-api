@@ -40,7 +40,7 @@ parser.add_argument('-m', '--mhz',
 parser.add_argument('-p', '--port',
                     required=False,
                     type=str,
-                    default=100, 
+                    default="/dev/raiden", 
                     dest="port",
                     metavar="<port>",
                     help="Serial port")
@@ -77,10 +77,11 @@ print(args)
 
 try:
     raiden = raiden.Raiden(mhz= args.mhz, serial_dev= args.port, baud= args.baud, ticks= args.ticks)
-    raiden.reset_fpga()
-    raiden.set_param(param="CMD_GLITCH_DELAY", seconds= args.delay)
-    raiden.set_param(param="CMD_GLITCH_WIDTH", seconds= args.width)
-    raiden.set_param(param="CMD_GLITCH_GAP", seconds= args.gap)
+    print(raiden.get_buildtime())
+    raiden.reset_glitcher()
+    raiden.set_param(param="CMD_GLITCH_DELAY", value= args.delay)
+    raiden.set_param(param="CMD_GLITCH_WIDTH", value= args.width)
+    raiden.set_param(param="CMD_GLITCH_GAP", value= args.gap)
     raiden.set_param(param="CMD_GLITCH_COUNT", value= args.count)
     raiden.set_param(param="CMD_VSTART", value= args.vstart)
     raiden.set_param(param="CMD_GLITCH_MAX", value= args.repeat)
@@ -91,5 +92,5 @@ try:
 except KeyboardInterrupt:		 
     print("Killing raiden...")
     raiden.arm(0)
-    raiden.reset_fpga()
+    raiden.reset_glitcher()
 
