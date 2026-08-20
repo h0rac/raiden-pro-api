@@ -40,7 +40,8 @@ class Raiden:
             "CMD_GPIO_OUT": 80,
             "CMD_UART_TRIGGER":81,
             "CMD_UART_TRIGGER_BAUD":82,
-            "CMD_EMMC_TRIGGER_DATA":83
+            "CMD_EMMC_TRIGGER_DATA":83,
+            "CMD_TRIGGER_SRC":84
         }
         
         self.device = serial.Serial(serial_dev, baudrate= baud, timeout=2.5, writeTimeout=2.5)
@@ -85,6 +86,7 @@ class Raiden:
             ord(raw) == self._commands["CMD_INVERT_TRIGGER"] or
             ord(raw) == self._commands["CMD_GPIO_OUT"] or
             ord(raw) == self._commands["CMD_UART_TRIGGER"] or
+            ord(raw) == self._commands["CMD_TRIGGER_SRC"] or
             ord(raw) == self._commands["CMD_RST_GLITCHER"]):
 
             data = struct.pack(">B", value)
@@ -146,6 +148,28 @@ class Raiden:
         else:
             print("Supported values arm values 1 or 0")
             return
+
+    def set_trigger_source(self, source="external"):
+        """
+        Select which source is allowed to fire the glitcher.
+
+        Only the selected source reaches the glitcher. All three used to be
+        XOR-ed together, so an unconfigured UART trigger sitting high would
+        invert the external trigger rather than being ignored.
+
+        "free" holds the trigger asserted and is what reset-driven campaigns
+        need: CMD_RESET_TARGET pulses the target, CMD_GLITCH_DELAY counts from
+        the release, and the shot fires with no external edge at all. This
+        replaces strapping trigger_in to 3.3 V.
+
+        :param source: "external" (trigger_in), "uart", "emmc", or "free"
+        """
+        sources = {"external": 0, "uart": 1, "emmc": 2, "free": 3}
+        key = source.lower()
+        if key not in sources:
+            raise ValueError("source must be one of {}".format(sorted(sources)))
+        self.__raiden_cmd(self.device, self._commands["CMD_TRIGGER_SRC"],
+                          sources[key])
 
     def set_target_power(self, power="auto"):
         """
@@ -243,10 +267,36 @@ class Raiden:
     
     def disc(self):
         """
-        Reset Raiden modules to default values
+        Close the serial port.
+
+        CMD_RST is deliberately NOT sent here. In cmd.v the RST state has no
+        exit path back to IDLE, so once the FSM enters it every later byte is
+        echoed blindly and never parsed as an opcode. The next process to open
+        the port then fails on a truncated read, and only reconfiguring the
+        FPGA clears it. Callers wanting the glitcher back at defaults should
+        use reset_glitcher(), which returns to IDLE correctly.
         """
-        self.__raiden_cmd(self.device, self._commands["CMD_RST"], 1)
         self.device.close()
+
+    def resync(self):
+        """
+        Flush a half-consumed 4-byte value out of the FPGA command FSM.
+
+        0x00 is not a valid opcode (valid range is 65-83), so an idle Raiden
+        ignores the padding while one stuck waiting on the tail of a 4-byte
+        value consumes it and falls back to IDLE. Returns True once the
+        device answers a single-byte status read.
+        """
+        for _ in range(3):
+            self.device.reset_input_buffer()
+            self.device.reset_output_buffer()
+            self.device.write(b"\x00" * 8)
+            time.sleep(0.15)
+            self.device.reset_input_buffer()
+            self.device.write(chr(self._commands["CMD_FLAGS_STATUS"]).encode("ASCII"))
+            if len(self.device.read(1)) == 1:
+                return True
+        return False
     
     def available_commands(self):
         """
