@@ -258,10 +258,12 @@ class Raiden:
 
     def get_buildtime(self):
         raw = self.__raiden_cmd(self.device, self._commands["CMD_BUILDTIME"])
-        day = ord(raw[3]) >> 3
-        month = ((ord(raw[3]) & 0x7) << 1) + (ord(raw[2]) >> 7)
-        year = ((ord(raw[2]) >> 1) & 0x3f) + 2000
-        hour = ((ord(raw[2]) & 0x1) << 4) + (ord(raw[1]) >> 4)
-        minute = ((ord(raw[1]) & 0xf) << 2) + (ord(raw[0]) >> 6)
-        return "Raiden build time: {}/{}/{}, {}:{}".format(day, month, year, hour, minute)
+        day    = raw[3] >> 3
+        month  = ((raw[3] & 0x7) << 1) + (raw[2] >> 7)
+        year   = ((raw[2] >> 1) & 0x3f) + 2000
+        hour   = ((raw[2] & 0x1) << 4) + (raw[1] >> 4)
+        minute = ((raw[1] & 0xf) << 2) + (raw[0] >> 6)
+        second = raw[0] & 0x3f
+        return "Raiden build time: {:02d}/{:02d}/{}, {:02d}:{:02d}:{:02d}".format(
+            day, month, year, hour, minute, second)
 
