@@ -85,6 +85,7 @@ try:
     raiden.set_param(param="CMD_GLITCH_COUNT", value= args.count)
     raiden.set_param(param="CMD_VSTART", value= args.vstart)
     raiden.set_param(param="CMD_GLITCH_MAX", value= args.repeat)
+    raiden.set_trigger_source("external")    
     raiden.arm(1)
     print("Raiden armed - CTL-C to quit...")		
     while True:		
