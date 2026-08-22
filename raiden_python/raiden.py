@@ -41,7 +41,9 @@ class Raiden:
             "CMD_UART_TRIGGER":81,
             "CMD_UART_TRIGGER_BAUD":82,
             "CMD_EMMC_TRIGGER_DATA":83,
-            "CMD_TRIGGER_SRC":84
+            "CMD_TRIGGER_SRC":84,
+            "CMD_BDM_CTRL":85,
+            "CMD_BDM_XFER":86
         }
         
         self.device = serial.Serial(serial_dev, baudrate= baud, timeout=2.5, writeTimeout=2.5)
@@ -99,6 +101,24 @@ class Raiden:
                 print("[+] incoming byte", raw)
             return
 
+        # BDM commands answer with data from the target rather than an echo of
+        # what was sent, so they get their own branch - the four-byte path
+        # below asserts reply == request, which would fail on every transfer.
+        if (ord(raw) == self._commands["CMD_BDM_CTRL"] or
+            ord(raw) == self._commands["CMD_BDM_XFER"]):
+
+            data = struct.pack(">I", value)
+            if self.debug:
+                print("[+] BDM outgoing", data.hex())
+            self.device.write(data)
+            raw = device.read(4)[::-1]
+            if len(raw) != 4:
+                raise IOError("short BDM reply: {} bytes".format(len(raw)))
+            reply = struct.unpack(">I", raw)[0]
+            if self.debug:
+                print("[+] BDM incoming {:08x}".format(reply))
+            return reply
+
         # 4 byte command handling
         if (ord(raw) == self._commands["CMD_GLITCH_DELAY"] or 
             ord(raw) == self._commands["CMD_GLITCH_WIDTH"] or 
@@ -119,6 +139,85 @@ class Raiden:
                 print("[+] incoming bytes", raw)
             return
         return
+
+    # ------------------------------------------------------------------ #
+    # MPC5xx development port (BDM)
+    #
+    # A frame is 35 bits: start, mode, control, then 32 bits of payload. The
+    # start bit is asserted in hardware. Because 35 bits do not fit one 32-bit
+    # command, mode/control and the DSCK idle level live in their own register
+    # that persists across transfers, and the three status bits of a reply come
+    # back on the acknowledge of the NEXT bdm_ctrl call.
+    #
+    #   mode control
+    #    0     0     instruction to CPU
+    #    0     1     data to CPU
+    #    1     0     write trap enable control register
+    #    1     1     debug port command
+    # ------------------------------------------------------------------ #
+
+    def bdm_ctrl(self, mode=0, control=0, dsck_idle=0):
+        """Set the frame type for following transfers.
+
+        Returns the three status bits of the previous transfer: bit 2 is
+        ready, bits 1:0 the status field. On a locked part that never answers
+        these read back as whatever the pulldown gives, which is how a dead
+        link looks.
+        """
+        value = (control & 1) | ((mode & 1) << 1) | ((dsck_idle & 1) << 2)
+        return self.__raiden_cmd(self.device, self._commands["CMD_BDM_CTRL"], value)
+
+    def bdm_xfer(self, data=0):
+        """Shift one 35-bit frame. Returns the low 32 bits of the reply.
+
+        Blocks in the FPGA until the frame completes - a few microseconds at
+        the default divider, well under the serial turnaround, so there is
+        nothing to poll.
+        """
+        return self.__raiden_cmd(self.device, self._commands["CMD_BDM_XFER"],
+                                 data & 0xFFFFFFFF)
+
+    def bdm_instruction(self, word):
+        """Hand an instruction to the CPU (mode 0, control 0)."""
+        self.bdm_ctrl(mode=0, control=0)
+        return self.bdm_xfer(word)
+
+    def bdm_data(self, word):
+        """Hand data to the CPU (mode 0, control 1)."""
+        self.bdm_ctrl(mode=0, control=1)
+        return self.bdm_xfer(word)
+
+    def bdm_command(self, opcode):
+        """Send a debug port command (mode 1, control 1).
+
+        Opcodes from Table 22-11: 0 NOP, 1 hard reset, 2 soft reset,
+        0x1F breakpoint control.
+        """
+        self.bdm_ctrl(mode=1, control=1)
+        return self.bdm_xfer(opcode)
+
+    def bdm_status(self):
+        """Read the status bits left by the last transfer.
+
+        Bit 2 is ready, bits 1:0 the status field:
+            00  valid data from CPU
+            01  sequencing error - the freeze bit rides in the data field
+            10  CPU interrupt
+            11  null
+        """
+        return self.bdm_ctrl() & 0x7
+
+    def bdm_frozen(self):
+        """True when the CPU is sitting in debug mode.
+
+        The freeze indication is bit 31 of the data field of a sequencing
+        error reply; section 22.5.5 also exposes it on the VFLS pins, but
+        reading it out of the bitstream costs no extra wiring.
+        """
+        status = self.bdm_status()
+        if (status & 0x3) != 0x1:
+            return False
+        return bool(self.bdm_xfer(0) & 0x80000000)
 
     def set_param(self, param="CMD_GLITCH_DELAY", value=1):
         """
